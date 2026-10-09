@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>三个数 · 每天记一笔</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #171a21;
+    --line: #262b36;
+    --text: #e8eaf0;
+    --dim: #8b93a7;
+    --a: #ff5c8a;   /* 抖音 */
+    --b: #4dd4ac;   /* 创作 */
+    --c: #7aa2ff;   /* 入睡 */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
+    max-width: 640px; margin-inline: auto;
+  }
+  h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: .5px; }
+  .sub { color: var(--dim); font-size: 13px; margin-bottom: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 16px; margin-bottom: 14px;
+  }
+  label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  input[type="number"], input[type="time"], input[type="date"] {
+    flex: 1; background: #0b0d11; color: var(--text);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; font-size: 17px; font-variant-numeric: tabular-nums;
+    width: 100%;
+  }
+  input:focus { outline: none; border-color: #3a4560; }
+  .field { margin-bottom: 14px; }
+  .unit { color: var(--dim); font-size: 13px; min-width: 28px; }
+  button {
+    width: 100%; padding: 14px; font-size: 16px; font-weight: 600;
+    color: #0b0d11; background: var(--text); border: 0;
+    border-radius: 12px; cursor: pointer;
+  }
+  button:active { opacity: .8; }
+  button.ghost {
+    background: transparent; color: var(--dim);
+    border: 1px solid var(--line); font-weight: 500; font-size: 14px; padding: 11px;
+  }
+  .ok { color: var(--b); font-size: 13px; height: 18px; margin-top: 8px; }
+  .grid { display: flex; gap: 8px; }
+  .grid > * { flex: 1; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--dim); margin-bottom: 10px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 7px 4px; font-size: 14px; }
+  th:first-child, td:first-child { text-align: left; color: var(--dim); }
+  thead th { color: var(--dim); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--line); }
+  .barwrap { display: flex; gap: 6px; align-items: flex-end; height: 90px; margin: 8px 0 4px; }
+  .daycol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; height: 100%; }
+  .bar { border-radius: 3px; min-height: 0; }
+  .b-a { background: var(--a); }
+  .b-b { background: var(--b); }
+  .xlabels { display: flex; gap: 6px; font-size: 11px; color: var(--dim); }
+  .xlabels div { flex: 1; text-align: center; }
+  .stat { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .stat:last-child { border-bottom: 0; }
+  .stat b { font-weight: 600; }
+  .note { font-size: 12px; color: var(--dim); line-height: 1.7; }
+  .danger { background: transparent; color: #ff7b7b; border: 1px solid #40232a; }
+</style>
+</head>
+<body>
+
+  <h1>三个数</h1>
+  <div class="sub">每天记一笔 · 抖音 / 创作 / 入睡 —— 数据只存在这台设备的浏览器里</div>
+
+  <!-- 1. 记今天的数 -->
+  <div class="card">
+    <div class="field">
+      <label>日期</label>
+      <input type="date" id="date">
+    </div>
+    <div class="field">
+      <label><span class="dot" style="background:var(--a)"></span>抖音（分钟）</label>
+      <div class="row">
+        <input type="number" id="douyin" min="0" step="1" placeholder="0" inputmode="numeric">
+        <span class="unit">分钟</span>
+      </div>
+    </div>
+    <div class="field">
+      <label><span class="dot" style="background:var(--b)"></span>创作（分钟）</label>
+      <div class="row">
+        <input type="number" id="create" min="0" step="1" placeholder="0" inputmode="numeric">
+        <span class="unit">分钟</span>
+      </div>
+    </div>
+    <div class="field">
+      <label><span class="dot" style="background:var(--c)"></span>入睡时间</label>
+      <div class="row">
+        <input type="time" id="sleep">
+        <span class="unit">点</span>
+      </div>
+    </div>
+    <button id="save">保存这一天</button>
+    <div class="ok" id="ok"></div>
+  </div>
+
+  <!-- 2. 最近 7 天 -->
+  <div class="card">
+    <div class="legend">
+      <span><i class="dot" style="background:var(--a)"></i>抖音</span>
+      <span><i class="dot" style="background:var(--b)"></i>创作</span>
+      <span style="margin-left:auto">单位：分钟</span>
+    </div>
+    <div class="barwrap" id="bars"></div>
+    <div class="xlabels" id="xlabels"></div>
+    <table>
+      <thead>
+        <tr><th>日期</th><th>抖音</th><th>创作</th><th>入睡</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 3. 小结 -->
+  <div class="card">
+    <div id="stats"></div>
+  </div>
+
+  <!-- 4. 目标 + 备份 -->
+  <div class="card">
+    <div class="field">
+      <label>抖音每日上限（分钟）</label>
+      <input type="number" id="goal" min="0" step="5">
+    </div>
+    <div class="grid">
+      <button class="ghost" id="export">导出备份</button>
+      <button class="ghost" id="import">导入备份</button>
+    </div>
+    <div style="height:10px"></div>
+    <button class="ghost danger" id="wipe">清空全部记录</button>
+  </div>
+
+  <div class="note">
+    <b>数据存在哪？</b>存在浏览器的 localStorage 里，也就是这个浏览器的本地存储。
+    它不联网、不上传、换一台设备就看不到。这意味着：<b>清浏览器数据会把它一起清掉</b>，
+    所以每周点一次「导出备份」，存个文件。第 2 周我们会把它搬到真正的后端（Supabase），
+    那时候就换设备也能看见了。
+  </div>
+
+<script>
+// ============================================================
+// 这个小工具的全部逻辑：读 → 改 → 存
+// 存储用浏览器的 localStorage，键名 useback.v1
+// ============================================================
+
+const KEY = "useback.v1";              // 存储的键名
+const DEFAULT_GOAL = 120;              // 抖音每日上限（分钟）
+
+// 把存储里的整块数据读出来
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return { goal: DEFAULT_GOAL, days: {} };
+    const data = JSON.parse(raw);
+    return { goal: data.goal || DEFAULT_GOAL, days: data.days || {} };
+  } catch (e) {
+    return { goal: DEFAULT_GOAL, days: {} };
+  }
+}
+
+// 把整块数据写回去
+function save(data) {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
+
+const $ = (id) => document.getElementById(id);
+
+// 今天，按本地时区写成 YYYY-MM-DD
+function todayStr(d) {
+  const t = d || new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return t.getFullYear() + "-" + p(t.getMonth() + 1) + "-" + p(t.getDate());
+}
+
+function shiftDay(dateStr, delta) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + delta);
+  return todayStr(d);
+}
+
+// 最近 n 天的日期（含今天），从旧到新
+function lastDays(n) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) out.push(shiftDay(todayStr(), -i));
+  return out;
+}
+
+function shortLabel(dateStr) {
+  const [, m, d] = dateStr.split("-");
+  return Number(m) + "/" + Number(d);
+}
+
+// ---------------- 渲染 ----------------
+let data = load();
+let currentDate = todayStr();
+
+function render() {
+  // 日期框里的那天，如果已经有记录，就把数值填进去（方便改）
+  const rec = data.days[currentDate] || {};
+  $("douyin").value = rec.douyin ?? "";
+  $("create").value = rec.create ?? "";
+  $("sleep").value = rec.sleep ?? "";
+  $("goal").value = data.goal;
+
+  const days = lastDays(7);
+  const rows = days.map((d) => ({ date: d, ...(data.days[d] || {}) }));
+  const maxMin = Math.max(60, ...rows.map((r) => Math.max(r.douyin || 0, r.create || 0)));
+
+  // 柱状图
+  $("bars").innerHTML = rows
+    .map((r) => {
+      const h1 = Math.round(((r.douyin || 0) / maxMin) * 100);
+      const h2 = Math.round(((r.create || 0) / maxMin) * 100);
+      return (
+        '<div class="daycol" title="' + r.date + '">' +
+        '<div class="bar b-b" style="height:' + h2 + '%"></div>' +
+        '<div class="bar b-a" style="height:' + h1 + '%"></div>' +
+        "</div>"
+      );
+    })
+    .join("");
+  $("xlabels").innerHTML = days.map((d) => "<div>" + shortLabel(d) + "</div>").join("");
+
+  // 表格
+  $("tbody").innerHTML = rows
+    .map(
+      (r) =>
+        "<tr><td>" +
+        shortLabel(r.date) +
+        "</td><td>" +
+        (r.douyin ?? "–") +
+        "</td><td>" +
+        (r.create ?? "–") +
+        "</td><td>" +
+        (r.sleep || "–") +
+        "</td></tr>"
+    )
+    .join("");
+
+  // 小结
+  const withDouyin = rows.filter((r) => typeof r.douyin === "number");
+  const avg = withDouyin.length
+    ? Math.round(withDouyin.reduce((s, r) => s + r.douyin, 0) / withDouyin.length)
+    : null;
+  const under = withDouyin.filter((r) => r.douyin <= data.goal).length;
+  const createSum = rows.reduce((s, r) => s + (r.create || 0), 0);
+  const sleeps = rows.map((r) => r.sleep).filter(Boolean).sort();
+  const medianSleep = sleeps.length ? sleeps[Math.floor(sleeps.length / 2)] : "–";
+  const filled = rows.filter((r) => r.douyin !== undefined || r.create !== undefined).length;
+
+  $("stats").innerHTML =
+    stat("这 7 天记了", filled + " / 7 天") +
+    stat("抖音日均", avg === null ? "–" : avg + " 分钟") +
+    stat("达标天数（≤" + data.goal + "）", under + " / " + withDouyin.length) +
+    stat("创作合计", createSum + " 分钟") +
+    stat("入睡中位数", medianSleep);
+}
+
+function stat(k, v) {
+  return '<div class="stat"><span>' + k + "</span><b>" + v + "</b></div>";
+}
+
+function flash(msg) {
+  $("ok").textContent = msg;
+  setTimeout(() => { $("ok").textContent = ""; }, 2200);
+}
+
+// ---------------- 交互 ----------------
+$("date").addEventListener("change", (e) => {
+  currentDate = e.target.value || todayStr();
+  render();
+});
+
+$("save").addEventListener("click", () => {
+  const rec = {
+    douyin: $("douyin").value === "" ? undefined : Number($("douyin").value),
+    create: $("create").value === "" ? undefined : Number($("create").value),
+    sleep: $("sleep").value || undefined,
+    savedAt: new Date().toISOString(),
+  };
+  // 三个都空 = 删掉这天的记录
+  if (rec.douyin === undefined && rec.create === undefined && rec.sleep === undefined) {
+    delete data.days[currentDate];
+  } else {
+    data.days[currentDate] = rec;
+  }
+  save(data);
+  render();
+  flash("已保存 " + currentDate);
+});
+
+$("goal").addEventListener("change", () => {
+  data.goal = Number($("goal").value) || DEFAULT_GOAL;
+  save(data);
+  render();
+});
+
+$("export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "三个数-备份-" + todayStr() + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  flash("备份文件已下载");
+});
+
+$("import").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.onchange = () => {
+    const f = input.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const incoming = JSON.parse(reader.result);
+        if (!incoming.days) throw new Error("格式不对");
+        data = { goal: incoming.goal || DEFAULT_GOAL, days: { ...data.days, ...incoming.days } };
+        save(data);
+        render();
+        flash("已合并导入");
+      } catch (e) {
+        flash("这个文件读不了");
+      }
+    };
+    reader.readAsText(f);
+  };
+  input.click();
+});
+
+$("wipe").addEventListener("click", () => {
+  if (!confirm("确定清空全部记录？这个操作不能撤销。")) return;
+  data = { goal: data.goal, days: {} };
+  save(data);
+  render();
+  flash("已清空");
+});
+
+// 启动
+$("date").value = currentDate;
+render();
+</script>
+</body>
+</html>
